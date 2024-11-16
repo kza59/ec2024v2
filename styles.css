@@ -1,0 +1,19 @@
+/*styles.css */
+
+body {
+    background-image: url('img1.png');
+    background-size: cover; /*ensures the background image covers the whole screen */
+    background-position: center; /*centers the background image */
+    background-repeat: no-repeat; /*prevents the background image from repeating */
+    color: white; /*sets the text color to white */
+    font-family: Arial, sans-serif; /*sets a default font family */
+    margin: 0; /*removes the default margin */
+    padding: 0; /*removes the default padding */
+  }
+  
+  h1, h2, h3, p, a {
+    color: white; /*ensures all these elements have white text */
+  }
+  
+  /*add more specific styles as needed */
+  

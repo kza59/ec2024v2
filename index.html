@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"> <!-- declare the document type and specify the language as English -->
+<head>
+  <meta charset="UTF-8"> <!-- specify the character encoding as UTF-8 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- make the page responsive -->
+  <title>Login</title> <!-- set the title of the page -->
+  <link rel="stylesheet" href="/styles.css"> <!-- link to your CSS file -->
+  <style>
+    body { font-family: Arial, sans-serif; } /* set the font for the entire body */
+    #login { margin-bottom: 20px; } /* add margin to the login section */
+    #users { margin-top: 20px; } /* add margin to the users list */
+    li { cursor: pointer; color: blue; margin: 5px 0; } /* style list items */
+  </style> <!-- add inline CSS for styling -->
+</head>
+<body>
+  <div>
+    <h2>
+      SPACECRAFT TO HEADQUARTERS COMMUNICATION WEBSITE <!-- main header for the page -->
+    </h2>
+  </div>
+
+  <div id="login"> <!-- section for user login -->
+    <input id="email" placeholder="Who are you?" /> <!-- input field for the user's ID -->
+    <div></div>
+    <input id="password" type="password" placeholder="Enter your password" /> <!-- input field for the user's password -->
+    <div></div>
+    <button id="loginBtn">Enter Communication</button> <!-- button to submit login -->
+  </div>
+
+  <div id="chat"> <!-- section for chat interface -->
+    <h2>Logged in as: <span id="loggedInUser"></span></h2> <!-- display the logged-in user's email -->
+    <h2>Peers</h2> <!-- header for the peers list -->
+    <ul id="users"></ul> <!-- unordered list to display online users -->
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script> <!-- include the Socket.IO library -->
+  <script>
+    const socket = io(); //initialize a Socket.IO connection
+    const emailInput = document.getElementById("email"); //get the email input element
+    const passwordInput = document.getElementById("password"); //get the password input element
+    const loginBtn = document.getElementById("loginBtn"); //get the login button element
+    const loggedInUserSpan = document.getElementById("loggedInUser"); //get the span to display the logged-in user
+    const usersList = document.getElementById("users"); //get the list element for users
+    const loginDiv = document.getElementById("login"); //get the login section
+    const chatDiv = document.getElementById("chat"); //get the chat section
+
+    chatDiv.style.display = "none"; //hide the chat section initially
+
+    let loggedInUser = null; //variable to store the logged-in user's email
+
+    // Login
+    loginBtn.onclick = async () => { //add a click event listener to the login button
+      const email = emailInput.value; //get the entered email
+      const password = passwordInput.value; //get the entered password
+
+      if (!email || !password) { //check if email and password are provided
+        return alert("Enter both email and password!"); //show an alert if any field is empty
+      }
+
+      const res = await fetch("/login", { //send a POST request to the /login endpoint
+        method: "POST", //specify the HTTP method
+        headers: { "Content-Type": "application/json" }, //set the request headers
+        body: JSON.stringify({ email, password }), //send the email and password as the request body
+      });
+
+      const data = await res.json(); //parse the JSON response
+      if (res.ok) { //check if the response is successful
+        loggedInUser = email; //set the logged-in user's email
+        socket.emit("login", email); //notify the server about the login
+
+        loggedInUserSpan.textContent = email; //update the logged-in user display
+        loginDiv.style.display = "none"; //hide the login section
+        chatDiv.style.display = "block"; //show the chat section
+      } else {
+        alert(data.error || "Login failed!"); //show an error message if login fails
+      }
+    };
+
+    socket.on("updateUsers", (users) => { //listen for the updateUsers event from the server
+      usersList.innerHTML = ""; //clear the current users list
+      users.forEach((user) => { //iterate through the list of users
+        if (user !== loggedInUser) { //exclude the logged-in user from the list
+          const li = document.createElement("li"); //create a new list item
+          li.textContent = user; //set the list item's text to the user's email
+          li.onclick = () => { //add a click event to open a chat window
+            window.open(`/chat?to=${user}&from=${loggedInUser}`, "_blank"); //open a new chat window
+          };
+          usersList.appendChild(li); //add the list item to the users list
+        }
+      });
+    });
+  </script> <!-- script to handle login and chat functionality -->
+</body>
+</html>

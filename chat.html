@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- define the document as html5 and set the language to english -->
+  <meta charset="UTF-8"> <!-- specify the character encoding as utf-8 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- ensure proper scaling on different devices -->
+  <title>Chat</title> <!-- set the title of the page -->
+  <style>
+    /* define the font and layout styles */
+    body { font-family: Arial, sans-serif; } /* set the font for the entire page */
+    #messages { 
+      border: 1px solid #ccc; /* add a border around the messages container */
+      padding: 10px; /* add padding inside the container */
+      height: 300px; /* set a fixed height */
+      overflow-y: scroll; /* allow vertical scrolling when content exceeds height */
+    }
+    #form { 
+      display: flex; /* use flexbox for layout */
+      margin-top: 10px; /* add space above the form */
+    }
+    #input { 
+      flex: 1; /* allow the input field to take up available space */
+      padding: 10px; /* add padding for user comfort */
+    }
+    #send { 
+      padding: 10px; /* add padding around the send button */
+    }
+  </style>
+</head>
+<body>
+  <h1>Communicate with <span id="recipient"></span></h1> <!-- display recipient's name dynamically -->
+  <div id="messages"></div> <!-- container for chat messages -->
+  <div id="form"> <!-- form containing the input and send button -->
+    <input id="input" autocomplete="off" placeholder="Type a message" /> <!-- text input field with placeholder -->
+    <button id="send">Send</button> <!-- button to send the message -->
+  </div>
+
+  <!-- include the socket.io client library -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io(); //initialize the socket connection
+    const urlParams = new URLSearchParams(window.location.search); //parse url parameters
+    const recipient = urlParams.get("to"); //get the "to" parameter (recipient)
+    const loggedInUser = urlParams.get("from"); //get the "from" parameter (logged-in user)
+    const messagesDiv = document.getElementById("messages"); //reference the messages container
+    const input = document.getElementById("input"); //reference the input field
+    const sendBtn = document.getElementById("send"); //reference the send button
+    document.getElementById("recipient").textContent = recipient; //display recipient's name in the heading
+
+    sendBtn.onclick = () => {
+      const message = input.value; // get the entered message
+      if (message) {
+        socket.emit("sendMessage", { to: recipient, from: loggedInUser, message }); // emit the message to the server
+        const div = document.createElement("div"); // create a new div for the message
+        div.textContent = `You: ${message}`; // display the sent message in the chat
+        messagesDiv.appendChild(div); // append the message to the chat container
+        input.value = ""; // clear the input field
+      }
+    };
+
+    socket.on("receiveMessage", ({ from, message }) => { //listen for incoming messages
+      if (from === recipient) { //check if the message is from the current recipient
+        const div = document.createElement("div"); //create a new div for the message
+        div.textContent = `${from}: ${message}`; //add text showing the sender's message
+        messagesDiv.appendChild(div); //append the div to the messages container
+      }
+    });
+
+    socket.emit("login", loggedInUser); //notify the server that the user has logged in
+  </script>
+</body>
+</html>
